@@ -1,0 +1,17 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Coverage
+coverage/
+
+# Logs
+logs
+*.log
+
+# Environment variables
+.env
+
+# OS
+.DS_Store
+Thumbs.db
