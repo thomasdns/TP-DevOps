@@ -1,0 +1,12 @@
+﻿{
+  "repositoryName": "thomasdns/TP-DevOps",
+  "pipelineDirectory": "TP-DevOps",
+  "workspaceDirectory": "TP-DevOps\\TP-DevOps",
+  "repositories": {
+    "thomasdns/TP-DevOps": {
+      "repositoryPath": "TP-DevOps\\TP-DevOps",
+      "lastRunOn": "02/19/2026 13:34:14 +01:00"
+    }
+  },
+  "lastRunOn": "02/19/2026 13:34:14 +01:00"
+}

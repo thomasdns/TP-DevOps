@@ -143,13 +143,13 @@ jobs:
   # Job Self-hosted proof (Partie 2)
   # ==========================
   local-runner-proof:
-    runs-on: self-hosted
+    runs-on: [self-hosted, windows]
     needs: [publish-coverage, build-backend]
     steps:
-      - name: Proof - self-hosted runner
-        shell: pwsh
+      - name: Proof - self-hosted Windows runner
+        shell: powershell
         run: |
-          Write-Host "OK: job running on SELF-HOSTED runner"
+          Write-Host "OK: job running on SELF-HOSTED Windows runner"
           Write-Host "Computer: $env:COMPUTERNAME"
           Write-Host "User: $env:USERNAME"
 
@@ -160,7 +160,7 @@ jobs:
           path: ./downloaded-build
 
       - name: List downloaded build artifact
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "Downloaded build artifact content:"
           Get-ChildItem -Recurse ./downloaded-build
