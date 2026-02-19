@@ -2,18 +2,19 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-  test-backend:
+  # ==========================
+  # Job Lint (parallèle)
+  # ==========================
+  lint:
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: backend
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,7 +25,142 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Run tests
+      - name: Run ESLint
+        run: npm run lint
+
+  # ==========================
+  # Job Audit (parallèle)
+  # ==========================
+  audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+
+  # ==========================
+  # Job Tests Backend (unit + integration)
+  # ==========================
+  test-backend:
+    runs-on: ubuntu-latest
+    needs: [lint, audit]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Show non-sensitive variable (proof)
+        run: echo "APP_ENV=${{ vars.APP_ENV }}"
+
+      - name: Use secret safely (proof masked)
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: echo "DB_PASSWORD length=${#DB_PASSWORD}"
+
+
+      - name: Run tests (unit + integration)
         run: npm test
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: backend/coverage
+          retention-days: 7
+
+  # ==========================
+  # Job Publish Coverage (réutilisation artefact)
+  # ==========================
+  publish-coverage:
+    runs-on: ubuntu-latest
+    needs: test-backend
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage
+
+      - name: Analyze coverage (proof artifact reuse)
+        run: |
+          echo "Files in coverage folder:"
+          ls -R ./coverage
+
+  # ==========================
+  # Job Build Backend (artefact build)
+  # ==========================
+  build-backend:
+    runs-on: ubuntu-latest
+    needs: test-backend
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci --omit=dev
+
+      - name: Package backend
+        run: |
+          mkdir -p dist
+          tar -czf dist/backend.tgz src package.json package-lock.json jest.config.js eslint.config.mjs
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: backend/dist/backend.tgz
+          retention-days: 7
+
+  # ==========================
+  # Job Self-hosted proof (Partie 2)
+  # ==========================
+  local-runner-proof:
+    runs-on: self-hosted
+    needs: [publish-coverage, build-backend]
+    steps:
+      - name: Proof - self-hosted runner
+        shell: pwsh
+        run: |
+          Write-Host "OK: job running on SELF-HOSTED runner"
+          Write-Host "Computer: $env:COMPUTERNAME"
+          Write-Host "User: $env:USERNAME"
+
+      - name: Download build artifact (proof reuse on self-hosted)
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: ./downloaded-build
+
+      - name: List downloaded build artifact
+        shell: pwsh
+        run: |
+          Write-Host "Downloaded build artifact content:"
+          Get-ChildItem -Recurse ./downloaded-build

@@ -1,0 +1,11 @@
+﻿{
+  "agentId": 2,
+  "agentName": "LAPTOP-88TCTK82",
+  "poolId": 1,
+  "poolName": "Default",
+  "serverUrl": "https://pipelinesghubeus12.actions.githubusercontent.com/G47RLFNjQUWMzgC6kLtrsJJ8CQAdOtiC5VvdgNvDks2EgAJXLu/",
+  "gitHubUrl": "https://github.com/thomasdns/TP-DevOps",
+  "workFolder": "_work",
+  "useV2Flow": true,
+  "serverUrlV2": "https://broker.actions.githubusercontent.com/"
+}
